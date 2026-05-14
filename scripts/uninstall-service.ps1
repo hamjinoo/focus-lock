@@ -15,10 +15,10 @@ if ($frozen.Count -gt 0) {
     Write-Host "REFUSED: $($frozen.Count) frozen session(s) still active." -ForegroundColor Red
     foreach ($s in $frozen) {
         $ends = (Get-Date 1970-01-01).AddSeconds([double]$s.ends_at).ToLocalTime()
-        Write-Host "  • $($s.label)  ends: $ends" -ForegroundColor Red
+        Write-Host "  * $($s.label)  ends: $ends" -ForegroundColor Red
     }
     Write-Host ""
-    Write-Host "This is by design — frozen sessions cannot be bypassed by uninstalling." -ForegroundColor DarkGray
+    Write-Host "This is by design - frozen sessions cannot be bypassed by uninstalling." -ForegroundColor DarkGray
     Write-Host "Wait until they expire, then retry." -ForegroundColor DarkGray
     exit 1
 }
@@ -42,4 +42,4 @@ try {
 Write-Host ""
 Write-Host "service '$ServiceName' removed" -ForegroundColor Green
 Write-Host "the hosts file managed block has NOT been cleared automatically." -ForegroundColor Yellow
-Write-Host "  → if you want it cleared, run scripts\clear-hosts.ps1" -ForegroundColor Yellow
+Write-Host "  -> if you want it cleared, run scripts\clear-hosts.ps1" -ForegroundColor Yellow

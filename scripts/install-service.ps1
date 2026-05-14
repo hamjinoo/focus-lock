@@ -11,7 +11,7 @@ try {
     Ensure-Nssm
 
     if (Test-ServiceExists) {
-        Write-Host "service already exists — reconfiguring" -ForegroundColor Yellow
+        Write-Host "service already exists - reconfiguring" -ForegroundColor Yellow
         & $NssmExe stop $ServiceName confirm | Out-Null
     } else {
         & $NssmExe install $ServiceName $VenvPython "-m" "uvicorn" "focus_lock.main:app" "--host" "127.0.0.1" "--port" "8765"
