@@ -21,5 +21,13 @@ UNINSTALL (refuses while any frozen session is still active)
   powershell -ExecutionPolicy Bypass -File scripts\uninstall-service.ps1
   powershell -ExecutionPolicy Bypass -File scripts\clear-hosts.ps1   # if hosts still has the block
 
+BROWSER EXTENSION (Chrome / Edge — required to cover DoH + incognito)
+  chrome://extensions/  -> Developer mode ON  -> Load unpacked -> select 'extension/' folder
+  Click Details on the extension -> turn ON "Allow in Incognito"
+
+DATA LOCATION (Windows)
+  state.db:        %PROGRAMDATA%\focus-lock\state.db
+  logs:            %PROGRAMDATA%\focus-lock\logs\
+
 DEV (no admin, uses /tmp/focus-lock-hosts on WSL/Linux)
   bash scripts/dev.sh

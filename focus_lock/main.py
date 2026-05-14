@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
@@ -49,6 +50,15 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="focus-lock", version="0.1.0", lifespan=lifespan)
+
+# Allow the browser extension to query block state. The service binds to
+# 127.0.0.1 only so this isn't reachable from the network.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origin_regex=r"^(chrome-extension://.*|moz-extension://.*|http://(localhost|127\.0\.0\.1)(:\d+)?)$",
+    allow_methods=["GET"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/api/status", response_model=StatusResponse)

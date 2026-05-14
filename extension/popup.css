@@ -1,0 +1,20 @@
+body {
+  width: 260px;
+  margin: 0;
+  padding: 14px 16px;
+  background: #0f1115;
+  color: #e5e7eb;
+  font: 13px/1.4 -apple-system, "Segoe UI", system-ui, sans-serif;
+}
+h1 { margin: 0 0 10px; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; color: #9ca3af; }
+.status { padding: 6px 10px; border-radius: 14px; font-size: 12px; text-align: center; margin-bottom: 10px; }
+.status.idle { background: #1f2937; color: #9ca3af; }
+.status.active { background: rgba(110, 231, 183, 0.15); color: #6ee7b7; }
+.status.frozen { background: rgba(248, 113, 113, 0.15); color: #f87171; }
+.status.stale { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
+#rules { font-size: 11px; color: #9ca3af; margin-bottom: 10px; }
+.hint { font-size: 11px; color: #fbbf24; background: rgba(251, 191, 36, 0.08); border-radius: 4px; padding: 6px 8px; margin-bottom: 10px; }
+.error { font-size: 11px; color: #f87171; }
+footer { font-size: 11px; }
+footer a { color: #6ee7b7; text-decoration: none; }
+footer a:hover { text-decoration: underline; }

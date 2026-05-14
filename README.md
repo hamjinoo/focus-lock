@@ -56,11 +56,12 @@ kernel-level filtering, no shipping a rootkit to enforce a habit.
 
 | Layer | What it stops | What it doesn't |
 |---|---|---|
-| Hosts file + reconciler | Casual bypass via DNS, browser cache, restarting the app | DNS-over-HTTPS in the browser. Phase 3 (browser extension) closes this. |
+| Hosts file + reconciler | Casual bypass via DNS, browser cache, restarting the app | DNS-over-HTTPS in the browser. The browser extension closes this. |
+| Browser extension (MV3, Chrome/Edge) | DoH-via-Chrome bypass, incognito mode (with `Allow in incognito` enabled) | A determined user disabling the extension. Adds friction. |
 | Frozen session (DB-level) | Trying to cancel an in-progress session through the UI / API | Stopping the service. See next row. |
 | NSSM auto-restart-on-exit | Crashes, OOM, programmatic kills | Manual `Stop-Service`. See next row. |
 | Task Scheduler watchdog | Manual `Stop-Service` — restarts within 1 minute | Booting into Safe Mode and editing hosts by hand. By design. |
-| Uninstall guard | `uninstall-service.ps1` refuses while any frozen session is active | `nssm remove` ran directly. Adds friction, not impossibility. |
+| Uninstall guard | `uninstall-service.ps1` refuses while any frozen session is active. Reads SQLite directly so 'Stop-Service then uninstall' does not bypass it. | `nssm remove` ran directly. Adds friction, not impossibility. |
 
 The combination is roughly **"5+ minutes of deliberate keyboard work to
 bypass during a frozen session"** — enough to outlast an impulse.
@@ -87,6 +88,23 @@ The installer:
 - Registers a Task Scheduler watchdog
 
 Quick command reference is in [`scripts/COMMANDS.txt`](scripts/COMMANDS.txt).
+
+## Install the browser extension (optional but recommended)
+
+Without the extension, **Chrome's DNS-over-HTTPS bypasses the hosts file**, so
+toggling "Use secure DNS" off in `chrome://settings/security` is the
+alternative. The extension is the durable answer.
+
+1. Open `chrome://extensions/` and turn on **Developer mode** (top-right).
+2. Click **Load unpacked** and select the [`extension/`](extension/) folder
+   in this repo.
+3. (For incognito coverage) click **Details** on the loaded extension and
+   turn on **Allow in Incognito**.
+
+The extension polls `http://127.0.0.1:8765` every 5 seconds and installs
+`declarativeNetRequest` rules for every actively-blocked domain. If the
+service is unreachable the extension **keeps the last known rules in place**
+(unblocking on transient failure would defeat the point).
 
 ## Development (WSL / Linux, no admin needed)
 
@@ -118,10 +136,16 @@ focus_lock/
   main.py          # FastAPI app + sync first-pass reconcile at startup
   models.py        # pydantic schemas
 
-web/               # vanilla HTML+CSS+JS, no build step
+web/               # vanilla HTML+CSS+JS dashboard, no build step
+extension/         # Chrome/Edge MV3 — talks to the local service
 scripts/           # PowerShell installers + bash dev runner
 tests/             # stdlib-only smoke test
 ```
+
+State (DB and logs) lives at:
+
+- Windows: `C:\ProgramData\focus-lock\` (shared between service + admin scripts)
+- Linux:   `~/.local/share/focus-lock/`
 
 No frontend framework, no ORM, no async DB layer. Two third-party Python
 packages total (`fastapi`, `uvicorn[standard]`; `pydantic` comes with FastAPI).
@@ -133,19 +157,24 @@ The whole thing is < 800 lines of Python.
   - Hosts blocker, schedules, frozen sessions, web UI, reconciler
 - **Phase 2 — tamper-resistance** ✅
   - NSSM Windows service, crash auto-restart, Task Scheduler watchdog,
-    frozen-aware uninstall guard
-- **Phase 3 — DoH coverage** (not started)
-  - Chrome / Edge MV3 extension to block at the browser layer for users who
-    have DNS-over-HTTPS enabled (which silently bypasses the hosts file)
+    frozen-aware uninstall guard (SQLite-direct check, not API-dependent)
+- **Phase 3 — DoH / incognito coverage** ✅
+  - Chrome / Edge MV3 extension that talks to the local service and installs
+    declarativeNetRequest rules. Works under DoH. Covers incognito when the
+    user enables "Allow in incognito".
 - **Phase 4 — process-level blocking** (maybe)
   - Kill listed `.exe` names while a block is active. Currently out of scope.
 
 ## Honest limitations
 
-- Browser DNS-over-HTTPS bypasses hosts. Until Phase 3 ships, disable DoH
-  in your browser or trust the user not to enable it as their first bypass.
 - An administrator can stop both the service and the watchdog, edit hosts,
-  and be done in two minutes. That's intended — see the design goal above.
+  disable the extension, and be done in three minutes. That's intended —
+  see the design goal above.
+- The browser extension is loaded "unpacked" (developer mode) until/unless
+  this ships to the Chrome Web Store. A determined user can disable it in
+  `chrome://extensions/`.
+- Other browsers (Firefox, Safari, Brave with strict DoH) are partially
+  covered by hosts but the extension is Chromium-only for now.
 - No mobile / no cross-device sync. By design — this is a single-machine
   tool, not a SaaS.
 - No code signing. The Windows installer scripts work fine but the project
