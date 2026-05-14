@@ -17,9 +17,12 @@ def default_hosts_path() -> Path:
 def default_db_path() -> Path:
     if override := os.environ.get("FOCUS_LOCK_DB"):
         return Path(override)
-    base = Path(os.environ.get("APPDATA") or Path.home() / ".focus-lock")
-    if sys.platform.startswith("win") and os.environ.get("APPDATA"):
-        base = Path(os.environ["APPDATA"]) / "focus-lock"
+    if sys.platform.startswith("win"):
+        # ProgramData is readable by all authenticated users; needed so the
+        # service (LocalSystem) and admin-launched scripts share one DB.
+        base = Path(os.environ.get("PROGRAMDATA", r"C:\ProgramData")) / "focus-lock"
+    else:
+        base = Path.home() / ".local" / "share" / "focus-lock"
     base.mkdir(parents=True, exist_ok=True)
     return base / "state.db"
 

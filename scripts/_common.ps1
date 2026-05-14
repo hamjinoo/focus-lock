@@ -61,10 +61,30 @@ function Get-ApiBase {
 }
 
 function Get-FrozenSessions {
-    # Returns @() if API unreachable or no frozen sessions active.
+    # Reads frozen sessions directly from SQLite using the venv Python.
+    # Does NOT depend on the API being up, so 'Stop-Service then uninstall'
+    # cannot bypass the frozen-session check.
+    if (-not (Test-Path $VenvPython)) {
+        # No venv yet means nothing has ever run; safe to allow uninstall.
+        return @()
+    }
+    $code = @'
+import json, sys
+from focus_lock import store
+store.init_db()
+out = [s for s in store.list_active_sessions() if s.get("frozen")]
+print(json.dumps(out))
+'@
+    Push-Location $ProjectRoot
     try {
-        $resp = Invoke-RestMethod -Uri "$(Get-ApiBase)/api/sessions" -TimeoutSec 2
-        return @($resp.sessions | Where-Object { $_.frozen -eq $true })
+        $json = & $VenvPython -c $code 2>$null
+    } finally {
+        Pop-Location
+    }
+    if ([string]::IsNullOrWhiteSpace($json)) { return @() }
+    try {
+        $parsed = $json | ConvertFrom-Json
+        return @($parsed)
     } catch {
         return @()
     }
