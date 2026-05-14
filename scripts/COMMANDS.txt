@@ -1,0 +1,25 @@
+focus-lock — quick reference (run all as Administrator)
+
+INSTALL (one time)
+  cd C:\Users\mae\focus-lock
+  powershell -ExecutionPolicy Bypass -File scripts\install-service.ps1
+  powershell -ExecutionPolicy Bypass -File scripts\setup-watchdog.ps1
+
+OPEN UI
+  http://127.0.0.1:8765
+
+STATUS / LOGS
+  Get-Service focus-lock
+  Get-Content $env:ProgramData\focus-lock\logs\service.out.log -Tail 30 -Wait
+  Get-Content $env:ProgramData\focus-lock\logs\service.err.log -Tail 30
+
+STOP / START (watchdog will restart within ~1 min if you stop it)
+  Stop-Service focus-lock
+  Start-Service focus-lock
+
+UNINSTALL (refuses while any frozen session is still active)
+  powershell -ExecutionPolicy Bypass -File scripts\uninstall-service.ps1
+  powershell -ExecutionPolicy Bypass -File scripts\clear-hosts.ps1   # if hosts still has the block
+
+DEV (no admin, uses /tmp/focus-lock-hosts on WSL/Linux)
+  bash scripts/dev.sh
